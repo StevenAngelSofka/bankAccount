@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "bankAccount")
-@SecondaryTable(name = "users")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -29,7 +28,7 @@ public class BankAccount {
     private String type;
 
     @ManyToOne
-    @JoinColumn(name = "idUser", table = "users")
+    @JoinColumn(name = "idUser")
     private User user;
 
 }
