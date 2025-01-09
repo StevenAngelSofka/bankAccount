@@ -229,6 +229,126 @@ This file describes the unit tests implemented for the entities and DTOs of the 
 
 ---
 
+# Unit Tests for Services
+
+This files describes the unit tests implemented for the methods of the `BankAccountService`, `UserService` y `TransactionService` in the `BankAccount` application. The tests are executed using `JUnit`, `Mockito`, and `MockMvc` to validate that the service methods work as expected.
+
+- [BankAccountServiceImplTest.java](src/test/java/com/bankAccount/bankAccount/services/BankAccountServiceImplTest.java)
+- [TransactionServiceImplTest.java](src/test/java/com/bankAccount/bankAccount/services/TransactionServiceImplTest.java)
+- [UserServiceImplTest.java](src/test/java/com/bankAccount/bankAccount/services/UserServiceImplTest.java)
+
+## Tested Methods
+
+### 1. **Get All Accounts by User**
+
+**Method**: `List<BankAccount> getAllAccountsByUser(long idUser)`
+
+- It tests that the service correctly retrieves all accounts for a user.
+- A mock `bankAccountRepository.findAll()` is used to return a list of accounts.
+- The result is validated to ensure the correct accounts are returned.
+
+### 2. **Get Balance by Account**
+
+**Method**: `BankAccountResponseDTO getBalanceByAccount(long idAccount)`
+
+- It tests that the service correctly retrieves the balance for a given account.
+- The method simulates an existing account in the repository and checks if the correct balance is returned in the response.
+- It also verifies the response status (`success` and `message`) when the account is not found.
+
+### 3. **Create Account**
+
+**Method**: `BankAccountResponseDTO createAccount(long idUser, BankAccount account)`
+
+- It tests that the service correctly creates a new bank account for a user.
+- The method simulates a successful account creation when the user is found in the repository.
+- It also checks that the correct success message and account data are returned in the response.
+- It verifies the response when the user is not found (failure scenario).
+
+### 4. **Update Account**
+
+**Method**: `BankAccountResponseDTO updateAccount(long idAccount, BankAccount account)`
+
+- It tests that the service correctly updates an existing account's details.
+- The method simulates an existing account in the repository and updates the account's fields.
+- It checks for a successful update response as well as failure when the account does not exist.
+
+### 5. **Delete Account**
+
+**Method**: `BankAccountResponseDTO deleteAccount(long idAccount)`
+
+- It tests that the service correctly deletes an account.
+- The method checks for the response when the account is found and when it is not found (failure scenario).
+- It also validates the success message when the account is deleted successfully.
+
+### 6. **Deposit Money**
+
+**Method**: `BankAccountResponseDTO depositMoney(long idAccount, double amount)`
+
+- It tests that the service correctly processes a deposit transaction.
+- The method checks for correct balance updates after a deposit and verifies the success response.
+- It also tests the failure response for invalid amounts or when the account is not found.
+
+### 7. **Withdraw Money**
+
+**Method**: `BankAccountResponseDTO withdrawMoney(long idAccount, double amount)`
+
+**Endpoint**: `POST /api/accounts/withdraw/{id}`
+
+- It tests that the service correctly processes a withdrawal transaction.
+- The method checks for balance updates after a withdrawal and verifies the success response.
+- It tests failure scenarios, such as insufficient funds or when the account is not found.
+
+### 8. **Add Transaction**
+
+**Method**: `void addTransaction(String message, double amount)`
+
+- It tests that the service correctly adds a new transaction to the list.
+- The method verifies that the transaction is added with the correct message, amount, and success status, and checks that the date is not null.
+
+### 9. **Get All Transactions**
+
+**Method**: `List<TransactionResponseDTO> getAllTransactions()`
+
+- It tests that the service correctly retrieves all transactions.
+- The method checks that the correct number of transactions is returned and that the messages correspond to the added transactions.
+
+### 10. **Get Transactions List**
+
+**Method**: `List<String> getTransactionsList()`
+
+- It tests that the service correctly retrieves a list of transaction messages.
+- The method checks that the list contains only the messages from the transactions and verifies their correctness.
+
+### 11. **Get All Users**
+
+**Method**: `getAllUsers()`
+
+- It tests that the service correctly returns a list of all users.
+- The response from `userRepository.findAll()` is simulated to return a list of users.
+- The response is validated to ensure the correct number of users and their properties.
+
+### 12. **Create User**
+
+**Method**: `createUser(User user)`
+
+- **Success Case**: Verifies that the user is created successfully and returns a success message with the created user.
+- **Failure Case**: Simulates a failure (e.g., database error) and ensures that the correct error message is returned.
+
+### 13. **Update User**
+
+**Method**: `updateUser(long idUser, User user)`
+
+- **Success Case**: Verifies that an existing user is updated successfully and returns the updated user.
+- **User Not Found Case**: Ensures that when the user is not found, a "user not found" message is returned.
+
+### 14. **Delete User**
+
+**Method**: `deleteUser(long idUser)`
+
+- **Success Case**: Verifies that an existing user is deleted successfully and returns a success message.
+- **User Not Found Case**: Ensures that when the user is not found, a "user not found" message is returned.
+---
+
 # Integration Tests for Entities
 
 This file describes the integration tests implemented for the entities of the `BankAccount` application. The tests are executed using `@DataJpaTest` to validate that the entities interact correctly with the database, including persistence and relationships.
