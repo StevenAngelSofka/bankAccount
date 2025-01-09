@@ -4,6 +4,7 @@ import com.bankAccount.bankAccount.dto.user.UserResponseDTO;
 import com.bankAccount.bankAccount.entities.User;
 import com.bankAccount.bankAccount.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,14 +16,26 @@ public class UserServiceImpl implements UserService {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
     @Override
-    public UserResponseDTO createUser(User user) {
+    public UserResponseDTO registerUser(User user) {
+        if (userRepository.existsByEmail(user.getEmail())) {
+            return UserResponseDTO.builder()
+                    .message("Email already in use")
+                    .success(false)
+                    .build();
+        }
+
         try {
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+
             User createdUser = userRepository.save(user);
 
             return UserResponseDTO.builder()

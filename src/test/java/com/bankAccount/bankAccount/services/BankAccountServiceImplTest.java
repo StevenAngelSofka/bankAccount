@@ -45,7 +45,7 @@ class BankAccountServiceImplTest {
     @BeforeEach
     public void setUp() {
         // Se crea una cuenta para las pruebas
-        User user = new User(1L, "123456789", "John Doe", "john.doe@example.com");
+        User user = new User(1L, "123456789", "John Doe", "john.doe@example.com", "securePassword123");
         account = new BankAccount(1L, "123456", 1000.00, "SAVINGS", user);
     }
 
@@ -54,7 +54,7 @@ class BankAccountServiceImplTest {
     @Test
     void testGetAllAccountsByUser_Success() {
         // Configuración del mock
-        User user = new User(1L, "123456", "John Doe", "john.doe@example.com");
+        User user = new User(1L, "123456", "John Doe", "john.doe@example.com", "securePassword123");
         BankAccount account1 = new BankAccount(1L, "12345", 1000.0, "Savings", user);
         BankAccount account2 = new BankAccount(2L, "67890", 500.0, "Checking", user);
         List<BankAccount> accounts = Arrays.asList(account1, account2);
@@ -104,7 +104,7 @@ class BankAccountServiceImplTest {
 
     @Test
     public void testCreateAccount_Success() {
-        User user = new User(1L, "123456789", "John Doe", "john.doe@example.com");
+        User user = new User(1L, "123456789", "John Doe", "john.doe@example.com", "securePassword123");
         BankAccount newAccount = new BankAccount(0L, "654321", 500.00, "CHECKING", user);
 
         // Simulamos que el usuario existe

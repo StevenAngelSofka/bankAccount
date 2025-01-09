@@ -20,9 +20,9 @@ public class UserController {
         return userService.getAllUsers();
     }
 
-    @PostMapping("/create")
-    public UserResponseDTO createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    @PostMapping("/register")
+    public UserResponseDTO registerUser(@RequestBody User user) {
+        return userService.registerUser(user);
     }
 
     @PutMapping("/update/{id}")

@@ -33,8 +33,8 @@ class UserServiceImplTest {
     public void testGetAllUsers() {
         // Arrange
         List<User> mockUsers = Arrays.asList(
-                new User(1, "12345", "John Doe", "johndoe@example.com"),
-                new User(2, "67890", "Jane Smith", "janesmith@example.com")
+                new User(1, "12345", "John Doe", "johndoe@example.com", "securePassword123"),
+                new User(2, "67890", "Jane Smith", "janesmith@example.com", "securePassword123")
         );
         when(userRepository.findAll()).thenReturn(mockUsers);
 
@@ -47,17 +47,17 @@ class UserServiceImplTest {
         assertEquals("Jane Smith", users.get(1).getName());
     }
 
-    /* createUser */
+    /* RegisterUser */
     @Test
-    public void testCreateUser_Success() {
+    public void testRegisterUser_Success() {
         // Arrange
-        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com");
-        User savedUser = new User(1, "54321", "Alice Johnson", "alice@example.com");
+        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
+        User savedUser = new User(1, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
 
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         // Act
-        UserResponseDTO response = userService.createUser(newUser);
+        UserResponseDTO response = userService.registerUser(newUser);
 
         // Assert
         assertTrue(response.isSuccess());
@@ -67,13 +67,13 @@ class UserServiceImplTest {
     }
 
     @Test
-    public void testCreateUser_Failure() {
+    public void testRegisterUser_Failure() {
         // Arrange
-        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com");
+        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("Database error"));
 
         // Act
-        UserResponseDTO response = userService.createUser(newUser);
+        UserResponseDTO response = userService.registerUser(newUser);
 
         // Assert
         assertFalse(response.isSuccess());
@@ -84,8 +84,8 @@ class UserServiceImplTest {
     @Test
     public void testUpdateUser_Success() {
         // Arrange
-        User existingUser = new User(1, "54321", "Alice Johnson", "alice@example.com");
-        User updatedUser = new User(1, "54321", "Alice Smith", "alice.smith@example.com");
+        User existingUser = new User(1, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
+        User updatedUser = new User(1, "54321", "Alice Smith", "alice.smith@example.com", "securePassword123");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
         when(userRepository.save(any(User.class))).thenReturn(updatedUser);
@@ -102,7 +102,7 @@ class UserServiceImplTest {
     @Test
     public void testUpdateUser_UserNotFound() {
         // Arrange
-        User updatedUser = new User(1, "54321", "Alice Smith", "alice.smith@example.com");
+        User updatedUser = new User(1, "54321", "Alice Smith", "alice.smith@example.com", "securePassword123");
 
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
@@ -118,7 +118,7 @@ class UserServiceImplTest {
     @Test
     public void testDeleteUser_Success() {
         // Arrange
-        User existingUser = new User(1, "54321", "Alice Johnson", "alice@example.com");
+        User existingUser = new User(1, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
 

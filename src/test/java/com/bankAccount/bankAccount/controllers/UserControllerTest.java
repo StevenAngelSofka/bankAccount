@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -28,6 +29,9 @@ class UserControllerTest {
 
     @MockitoBean
     private UserService userService;
+
+    @MockitoBean
+    private PasswordEncoder passwordEncoder;
 
 
     @Test
@@ -54,41 +58,57 @@ class UserControllerTest {
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$.size()").value(2)) // Cambiado de length() a size()
                 .andExpect(jsonPath("$[0].idUser").value(1L))
                 .andExpect(jsonPath("$[0].name").value("John"))
+                .andExpect(jsonPath("$[0].email").value("john.doe@example.com")) // Validación del primer usuario
+                .andExpect(jsonPath("$[1].idUser").value(2L))
+                .andExpect(jsonPath("$[1].name").value("Jane"))
                 .andExpect(jsonPath("$[1].email").value("jane.smith@example.com"));
     }
 
 
     @Test
-    void testCreateUser() throws Exception {
+    void testRegisterUser() throws Exception {
         // Arrange
-        long userId = 1L;
+        String rawPassword = "securePassword123";
+        String hashedPassword = "$2a$10$hashedPasswordExample"; // Simulación de la contraseña hasheada
 
         User user = User.builder()
                 .identificationNumber("1.033.763.458")
                 .name("Steven Angel")
                 .email("steven.angel@example.com")
+                .password(rawPassword) // Contraseña en texto plano como la entrada
+                .build();
+
+        User savedUser = User.builder()
+                .idUser(1L)
+                .identificationNumber("1.033.763.458")
+                .name("Steven Angel")
+                .email("steven.angel@example.com")
+                .password(hashedPassword) // Contraseña hasheada en el usuario guardado
                 .build();
 
         // DTO esperado
         UserResponseDTO responseDTO = UserResponseDTO.builder()
                 .message("User created successfully")
                 .success(true)
-                .data(user)
+                .data(savedUser)
                 .build();
 
-        // Simulamos la llamada al servicio
-        when(userService.createUser(user)).thenReturn(responseDTO);
+        // Simulamos el comportamiento del servicio
+        when(userService.registerUser(savedUser)).thenReturn(responseDTO);
+        when(passwordEncoder.encode(rawPassword)).thenReturn(hashedPassword);
 
         // Act & Assert
-        mockMvc.perform(post("/api/users/create")
+        mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(new ObjectMapper().writeValueAsString(user)))
                 .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("User created successfully"))
                 .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.idUser").value(1L))
                 .andExpect(jsonPath("$.data.identificationNumber").value("1.033.763.458"))
                 .andExpect(jsonPath("$.data.name").value("Steven Angel"))
                 .andExpect(jsonPath("$.data.email").value("steven.angel@example.com"));
