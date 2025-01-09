@@ -37,7 +37,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("The account with ID: " + idAccount + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -59,7 +58,6 @@ public class BankAccountServiceImpl implements BankAccountService {
                 return BankAccountResponseDTO.builder()
                         .message("User with ID: " + idUser + " not found.")
                         .success(false)
-                        .data(null)
                         .build();
             }
             User user = userDB.get();
@@ -76,7 +74,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Error creating an account: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
@@ -89,7 +86,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("The account with ID: " + idAccount + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -109,11 +105,8 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Error updating an account: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
-
-
     }
 
     @Override
@@ -124,7 +117,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("The account with ID: " + idAccount + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -140,7 +132,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Error deleting an account: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
@@ -151,7 +142,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Invalid amount.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -161,7 +151,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("The account with ID: " + idAccount + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -186,7 +175,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("An error occurred while processing the transaction. Please try again later.")
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
@@ -197,7 +185,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Invalid amount.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -207,7 +194,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("The account with ID: " + idAccount + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -217,7 +203,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("Insufficient funds.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -242,7 +227,6 @@ public class BankAccountServiceImpl implements BankAccountService {
             return BankAccountResponseDTO.builder()
                     .message("An error occurred while processing the transaction. Please try again later.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 

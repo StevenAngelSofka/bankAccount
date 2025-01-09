@@ -34,7 +34,6 @@ public class UserServiceImpl implements UserService {
             return UserResponseDTO.builder()
                     .message("Error creating user: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
@@ -48,7 +47,6 @@ public class UserServiceImpl implements UserService {
                 return UserResponseDTO.builder()
                         .message("The user with ID: " + idUser + " does not exist.")
                         .success(false)
-                        .data(null)
                         .build();
             }
 
@@ -68,7 +66,6 @@ public class UserServiceImpl implements UserService {
             return UserResponseDTO.builder()
                     .message("Error updating user: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
@@ -82,7 +79,6 @@ public class UserServiceImpl implements UserService {
             return UserResponseDTO.builder()
                     .message("The user with ID: " + idUser + " does not exist.")
                     .success(false)
-                    .data(null)
                     .build();
         }
 
@@ -98,7 +94,6 @@ public class UserServiceImpl implements UserService {
             return UserResponseDTO.builder()
                     .message("Error deleting user: " + e.getMessage())
                     .success(false)
-                    .data(null)
                     .build();
         }
     }
