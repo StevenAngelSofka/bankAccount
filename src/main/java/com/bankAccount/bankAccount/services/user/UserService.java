@@ -9,7 +9,7 @@ public interface UserService {
 
     List<User> getAllUsers();
 
-    UserResponseDTO createUser(User user);
+    UserResponseDTO registerUser(User user);
 
     UserResponseDTO updateUser(long idUser, User user);
 

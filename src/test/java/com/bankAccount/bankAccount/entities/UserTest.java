@@ -8,7 +8,7 @@ class UserTest {
     @Test
     public void testUserConstructor() {
         // Crear un objeto User usando el constructor
-        User user = new User(1L, "12345", "John Doe", "john.doe@example.com");
+        User user = new User(1L, "12345", "John Doe", "john.doe@example.com", "securePassword123");
 
         assertNotNull(user);
         assertEquals(1L, user.getIdUser());
