@@ -1,14 +1,18 @@
 package com.bankAccount.bankAccount.controllers;
 
+import com.bankAccount.bankAccount.config.TestSecurityConfig;
 import com.bankAccount.bankAccount.controllers.bankAccount.BankAccountController;
 import com.bankAccount.bankAccount.dto.bankAccount.BankAccountResponseDTO;
 import com.bankAccount.bankAccount.entities.BankAccount;
+import com.bankAccount.bankAccount.services.auth.CustomUserDetailsService;
+import com.bankAccount.bankAccount.config.JwtUtil;
 import com.bankAccount.bankAccount.services.bankAccount.BankAccountService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,6 +25,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(BankAccountController.class)
+@Import(TestSecurityConfig.class)
 @AllArgsConstructor
 class BankAccountControllerTest {
 
@@ -28,8 +33,13 @@ class BankAccountControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private BankAccountService bankAccountService;
+    private JwtUtil jwtUtil;
 
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private BankAccountService bankAccountService;
 
     @Test
     void testGetAllAccountsByUser() throws Exception {
