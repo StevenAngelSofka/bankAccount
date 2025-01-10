@@ -9,6 +9,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,6 +29,9 @@ class UserServiceImplTest {
 
     @InjectMocks
     private UserServiceImpl userService;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     /* getAllUsers */
     @Test
@@ -51,9 +56,13 @@ class UserServiceImplTest {
     @Test
     public void testRegisterUser_Success() {
         // Arrange
-        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
-        User savedUser = new User(1, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
+        String rawPassword = "securePassword123"; // Contraseña en texto claro
+        String encodedPassword = "hashedPassword123";
 
+        User newUser = new User(0, "54321", "Alice Johnson", "alice@example.com", rawPassword);
+        User savedUser = new User(1, "54321", "Alice Johnson", "alice@example.com", encodedPassword);
+
+        when(passwordEncoder.encode(rawPassword)).thenReturn(encodedPassword);
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
         // Act

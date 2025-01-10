@@ -1,14 +1,18 @@
 package com.bankAccount.bankAccount.controllers;
 
+import com.bankAccount.bankAccount.config.TestSecurityConfig;
 import com.bankAccount.bankAccount.controllers.user.UserController;
 import com.bankAccount.bankAccount.dto.user.UserResponseDTO;
 import com.bankAccount.bankAccount.entities.User;
+import com.bankAccount.bankAccount.services.auth.CustomUserDetailsService;
+import com.bankAccount.bankAccount.config.JwtUtil;
 import com.bankAccount.bankAccount.services.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -21,11 +25,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(UserController.class)
+@Import(TestSecurityConfig.class)
 @AllArgsConstructor
 class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
 
     @MockitoBean
     private UserService userService;
@@ -103,7 +114,7 @@ class UserControllerTest {
         // Act & Assert
         mockMvc.perform(post("/api/users/register")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(user)))
+                        .content(new ObjectMapper().writeValueAsString(savedUser)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.message").value("User created successfully"))
