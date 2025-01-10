@@ -1,12 +1,16 @@
 package com.bankAccount.bankAccount.controllers;
 
+import com.bankAccount.bankAccount.config.TestSecurityConfig;
 import com.bankAccount.bankAccount.controllers.transaction.TransactionController;
 import com.bankAccount.bankAccount.dto.transaction.TransactionResponseDTO;
+import com.bankAccount.bankAccount.services.auth.CustomUserDetailsService;
+import com.bankAccount.bankAccount.config.JwtUtil;
 import com.bankAccount.bankAccount.services.transaction.TransactionService;
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TransactionController.class)
+@Import(TestSecurityConfig.class)
 @AllArgsConstructor
 class TransactionControllerTest {
 
@@ -26,7 +31,13 @@ class TransactionControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    TransactionService transactionService;
+    private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private CustomUserDetailsService customUserDetailsService;
+
+    @MockitoBean
+    private TransactionService transactionService;
 
     @Test
     void testGetAllTransactions() throws Exception {

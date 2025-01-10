@@ -6,6 +6,45 @@ This project is an application for managing bank accounts, users and transaction
 
 This project is part of Sofka Technologies' DEV INTERMEDIATE training.
 
+## Database Table Relationships
+
+The application uses two main entities: `User` and `BankAccount`. Below are the details of the database tables and their relationships.
+
+### 1. **Users Table**
+
+This table stores information about the users of the system.
+
+| Column Name        | Type          | Description                                      |
+|--------------------|---------------|--------------------------------------------------|
+| `idUser`           | BIGINT        | Unique identifier for the user (Primary Key).    |
+| `identificationNumber` | VARCHAR(255) | Unique identification number for the user.      |
+| `name`             | VARCHAR(255)  | Name of the user.                               |
+| `email`            | VARCHAR(255)  | Unique email address of the user (Unique).       |
+| `password`         | VARCHAR(255)  | Password of the user.                           |
+
+### 2. **BankAccount Table**
+
+This table stores information about the bank accounts associated with users.
+
+| Column Name        | Type          | Description                                      |
+|--------------------|---------------|--------------------------------------------------|
+| `idAccount`        | BIGINT        | Unique identifier for the bank account (Primary Key). |
+| `numberAccount`    | VARCHAR(255)  | Unique account number for the bank account.      |
+| `balance`          | DOUBLE        | Current balance in the bank account.            |
+| `type`             | VARCHAR(50)   | Type of the bank account (e.g., Savings, Checking). |
+| `idUser`           | BIGINT        | Foreign key referencing `idUser` in the `users` table (Many-to-One relationship). |
+
+### 3. **Relationship Between Users and BankAccount**
+
+- The `BankAccount` entity has a **Many-to-One** relationship with the `User` entity.
+- Each user can have multiple bank accounts, but each bank account is associated with exactly one user.
+
+#### Entity Relationship Diagram (ERD)
+
+- **User (1) --- (Many) BankAccount**
+
+This means that a user can have multiple bank accounts, but each bank account can only be associated with one user.
+
 # Project Structure
 
 The project is divided into the following layers:
@@ -53,6 +92,105 @@ Controllers handle HTTP requests and expose RESTful APIs.
 - [BankAccountController.java](src/main/java/com/bankAccount/bankAccount/controllers/bankAccount/BankAccountController.java)
 - [TransactionController.java](src/main/java/com/bankAccount/bankAccount/controllers/transaction/TransactionController.java)
 - [UserController.java](src/main/java/com/bankAccount/bankAccount/controllers/user/UserController.java)
+
+
+# Spring Security with JWT and AAA Protocol Configuration
+
+This document describes the configuration and files required to implement Spring Security using JWT and the Authentication, Authorization, and Auditing (AAA) protocol.
+
+## Created Files and Their Functionality
+
+### 1. **SecurityConfig.java**
+
+This file contains the main security configuration for the application, setting up Spring Security with JWT and the AAA protocol. Below are its key components:
+
+- **`SecurityConfig` class**: Defines the security configuration for the application.
+- **`securityFilterChain(HttpSecurity http)` method**: Configures security filters, allowing routes in the whitelist (like `/h2-console/**` and `/api/auth/**`) and setting up JWT-based authentication.
+- **`authenticationManager()` method**: Creates an `AuthenticationManager` to handle authentication.
+- **`passwordEncoder()` method**: Defines a password encoder using `BCryptPasswordEncoder`.
+
+### 2. **JwtFilter.java**
+
+This filter is responsible for intercepting incoming requests to validate the JWT in the authorization header. If the JWT is valid, it allows user authentication within the security context.
+
+- **`JwtFilter` class**: Extends `OncePerRequestFilter` and validates the JWT in incoming requests.
+- **`doFilterInternal()` method**: Extracts the JWT from the authorization header, validates it, and if valid, loads the corresponding user into the security context.
+
+### 3. **UserDetail.java**
+
+This class extends Spring Security's `User` and is used to customize the authenticated user's details, such as the username, password, and authorities.
+
+- **`UserDetail` class**: Represents the customized details of a user.
+
+### 4. **AuthController.java**
+
+This controller handles authentication requests. The entry point is `/api/auth/login`, where users submit their credentials and receive a JWT token if authentication is successful.
+
+- **`login()` method**: Authenticates the user using the provided credentials and returns a JWT token.
+
+### 5. **AuthRequestDTO.java**
+
+This Data Transfer Object (DTO) represents the authentication request, containing the user's email and password.
+
+- **`AuthRequestDTO` class**: Contains the `email` and `password` fields for user authentication.
+
+### 6. **AuthResponseDTO.java**
+
+This DTO contains the authentication response, which includes the JWT token generated after successful authentication.
+
+- **`AuthResponseDTO` class**: Contains the `token` field that represents the JWT.
+
+### 7. **AuthService.java**
+
+This service handles the authentication logic, including validating the user's credentials and generating the JWT token.
+
+- **`authenticate()` method**: Validates the user's credentials, generates a JWT token if authentication is successful, and returns it in an `AuthResponseDTO` object.
+
+### 8. **CustomUserDetailsService.java**
+
+This service is responsible for loading user details from the database. It uses a user repository to find a user by their email and return a customized `UserDetails` object.
+
+- **`loadUserByUsername()` method**: Loads a user from the database based on the email and converts it into a `UserDetail` with the necessary credentials.
+
+### 9. **JwtUtil.java**
+
+This component manages the creation, validation, and decoding of JWT tokens.
+
+- **`generateToken()` method**: Generates a JWT token using the user's email.
+- **`isTokenValid()` method**: Validates whether a JWT is valid.
+- **`getEmailByUser()` method**: Extracts the user's email from the JWT.
+
+## Spring Security Configuration
+
+The security configuration uses a JWT-based authentication pattern, meaning that after successful authentication, the server generates a JWT token that the client must include in subsequent requests in the `Authorization` header as a Bearer token.
+
+### Key Steps:
+
+1. **User Registration and Authentication**:
+    - Users can register via the `/api/users/register` route and authenticate their credentials via `/api/auth/login`.
+    - The authentication service validates the credentials and returns a JWT token if successful.
+
+2. **Route Protection**:
+    - Public routes are whitelisted (like `/h2-console/**` and `/api/auth/**`), while other routes require authentication.
+    - The `JwtFilter` intercepts the requests and validates the JWT token before allowing access.
+
+3. **AAA Protocol (Authentication, Authorization, Auditing)**:
+    - **Authentication**: Handled through the login process and the validation of the JWT token.
+    - **Authorization**: Only authenticated users can access protected routes.
+    - **Auditing**: Additional logging or implementations can be added to audit access and activities in the system.
+
+## Security configuration for Testing
+
+To perform unit and integration tests in the security context, a custom security configuration for tests has been created. This configuration allows all routes to be accessible without authentication, facilitating testing.
+
+### 1. **TestSecurityConfig.java**
+
+This file configures a custom security filter for tests, disabling CSRF protection and allowing all requests without authentication. This makes it easier to perform tests without handling authentication in each request.
+
+## Additional Considerations
+
+- **H2 Console**: The H2 console access is enabled in the development environment by including it in the whitelist.
+- **Production Security**: Ensure that a more secure secret is configured for generating JWT tokens in a production environment, and perform adequate security testing.
 
 
 # Unit Tests for Controllers

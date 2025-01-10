@@ -34,7 +34,8 @@ public class UserServiceImpl implements UserService {
         }
 
         try {
-            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            String hashedPassword = passwordEncoder.encode(user.getPassword());
+            user.setPassword(hashedPassword);
 
             User createdUser = userRepository.save(user);
 
