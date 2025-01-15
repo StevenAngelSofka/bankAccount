@@ -12,12 +12,14 @@ class BankAccountTest {
 
         BankAccount bankAccount = new BankAccount(1L, "ACC12345", 1000.00, "Savings", user);
 
-        assertNotNull(bankAccount);
-        assertEquals(1L, bankAccount.getIdAccount());
-        assertEquals("ACC12345", bankAccount.getNumberAccount());
-        assertEquals(1000.00, bankAccount.getBalance());
-        assertEquals("Savings", bankAccount.getType());
-        assertEquals(1L, bankAccount.getUser().getIdUser());
+        assertAll("Verify BankAccount constructor properties",
+                () -> assertNotNull(bankAccount),
+                () -> assertEquals(1L, bankAccount.getIdAccount()),
+                () -> assertEquals("ACC12345", bankAccount.getNumberAccount()),
+                () -> assertEquals(1000.00, bankAccount.getBalance()),
+                () -> assertEquals("Savings", bankAccount.getType()),
+                () -> assertEquals(1L, bankAccount.getUser().getIdUser())
+        );
     }
 
     @Test
@@ -32,10 +34,12 @@ class BankAccountTest {
         bankAccount.setType("Checking");
         bankAccount.setUser(user);
 
-        assertEquals(1L, bankAccount.getIdAccount());
-        assertEquals("ACC67890", bankAccount.getNumberAccount());
-        assertEquals(500.00, bankAccount.getBalance());
-        assertEquals("Checking", bankAccount.getType());
-        assertEquals(1L, bankAccount.getUser().getIdUser());
+        assertAll("Verify BankAccount setters and getters",
+                () -> assertEquals(1L, bankAccount.getIdAccount()),
+                () -> assertEquals("ACC67890", bankAccount.getNumberAccount()),
+                () -> assertEquals(500.00, bankAccount.getBalance()),
+                () -> assertEquals("Checking", bankAccount.getType()),
+                () -> assertEquals(1L, bankAccount.getUser().getIdUser())
+        );
     }
 }

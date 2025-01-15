@@ -28,6 +28,7 @@ class BankAccountIT {
         user.setIdentificationNumber("12345");
         user.setName("John Doe");
         user.setEmail("john.doe@example.com");
+        user.setPassword("securePassword123");
         userRepository.save(user);
 
         // Crear un objeto BankAccount

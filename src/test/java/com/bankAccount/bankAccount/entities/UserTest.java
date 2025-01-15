@@ -10,11 +10,13 @@ class UserTest {
         // Crear un objeto User usando el constructor
         User user = new User(1L, "12345", "John Doe", "john.doe@example.com", "securePassword123");
 
-        assertNotNull(user);
-        assertEquals(1L, user.getIdUser());
-        assertEquals("12345", user.getIdentificationNumber());
-        assertEquals("John Doe", user.getName());
-        assertEquals("john.doe@example.com", user.getEmail());
+        assertAll("Verify User constructor properties",
+                () -> assertNotNull(user),
+                () -> assertEquals(1L, user.getIdUser()),
+                () -> assertEquals("12345", user.getIdentificationNumber()),
+                () -> assertEquals("John Doe", user.getName()),
+                () -> assertEquals("john.doe@example.com", user.getEmail())
+        );
     }
 
     @Test
@@ -27,9 +29,11 @@ class UserTest {
         user.setEmail("john.doe@example.com");
 
         // Verificar que los setters y getters funcionan correctamente
-        assertEquals(1L, user.getIdUser());
-        assertEquals("12345", user.getIdentificationNumber());
-        assertEquals("John Doe", user.getName());
-        assertEquals("john.doe@example.com", user.getEmail());
+        assertAll("Verify User setters and getters",
+                () -> assertEquals(1L, user.getIdUser()),
+                () -> assertEquals("12345", user.getIdentificationNumber()),
+                () -> assertEquals("John Doe", user.getName()),
+                () -> assertEquals("john.doe@example.com", user.getEmail())
+        );
     }
 }

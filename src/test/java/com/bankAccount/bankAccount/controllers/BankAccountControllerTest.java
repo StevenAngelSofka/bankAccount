@@ -20,6 +20,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -46,7 +47,7 @@ class BankAccountControllerTest {
         // Arrange
         long userId = 1L;
 
-        List<BankAccount> mockAccounts = Arrays.asList(
+        List<BankAccount> mockAccounts = List.of(
                 BankAccount.builder()
                         .idAccount(1L)
                         .numberAccount("123456")
@@ -140,8 +141,6 @@ class BankAccountControllerTest {
         long accountId = 1L;
         double depositAmount = 500.0;
 
-        String depositRequest = "{\"amount\": 500.0}";
-
         // DTO esperado
         BankAccountResponseDTO mockResponse = BankAccountResponseDTO.builder()
                 .message("Deposit successful")
@@ -151,6 +150,8 @@ class BankAccountControllerTest {
 
         // Simulamos la llamada al servicio
         when(bankAccountService.depositMoney(accountId, depositAmount)).thenReturn(mockResponse);
+
+        String depositRequest = "{\"amount\": " + depositAmount + "}";
 
         // Act & Assert
         mockMvc.perform(post("/api/accounts/deposit/{id}", accountId)
@@ -169,8 +170,6 @@ class BankAccountControllerTest {
         long accountId = 1L;
         double withdrawAmount = 300.0;
 
-        String withdrawRequest = "{\"amount\": 300.0}";
-
         // DTO esperado
         BankAccountResponseDTO mockResponse = BankAccountResponseDTO.builder()
                 .message("Withdrawal successful")
@@ -180,6 +179,8 @@ class BankAccountControllerTest {
 
         // Simulamos la llamada al servicio
         when(bankAccountService.withdrawMoney(accountId, withdrawAmount)).thenReturn(mockResponse);
+
+        String withdrawRequest = "{\"amount\": " + withdrawAmount + "}";
 
         // Act & Assert
         mockMvc.perform(post("/api/accounts/withdraw/{id}", accountId)
