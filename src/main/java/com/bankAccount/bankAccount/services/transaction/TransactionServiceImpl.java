@@ -1,6 +1,7 @@
 package com.bankAccount.bankAccount.services.transaction;
 
 import com.bankAccount.bankAccount.dto.transaction.TransactionResponseDTO;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,23 +21,22 @@ public class TransactionServiceImpl implements TransactionService {
                 .success(true)
                 .amount(amount)
                 .date(LocalDateTime.now())
+                .httpStatus(HttpStatus.OK)
                 .build();
 
         transactionList.add(transaction);
+        messagesList.add(transaction.getMessage());
     }
 
     @Override
     public List<TransactionResponseDTO> getAllTransactions() {
-        return new ArrayList<>(transactionList);
+        return List.copyOf(transactionList);
     }
 
     @Override
     public List<String> getTransactionsList() {
-
-        for (TransactionResponseDTO transaction : transactionList) {
-            messagesList.add(transaction.getMessage());
-        }
-
-        return messagesList;
+        return transactionList.stream()
+                .map(TransactionResponseDTO::getMessage)
+                .toList();
     }
 }

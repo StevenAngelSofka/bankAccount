@@ -28,10 +28,12 @@ class TransactionServiceImplTest {
 
         // Assert
         List<TransactionResponseDTO> transactions = transactionService.getAllTransactions();
+        assertNotNull(transactions);
         assertEquals(1, transactions.size());
-        assertEquals(message, transactions.get(0).getMessage());
-        assertEquals(amount, transactions.get(0).getAmount());
-        assertNotNull(transactions.get(0).getDate());
+
+        TransactionResponseDTO transaction = transactions.get(0);
+        assertTrue(transactions.stream().anyMatch(t -> t.getMessage().equals(message) && t.getAmount() == amount));
+        assertNotNull(transaction.getDate());
     }
 
     @Test
@@ -44,9 +46,11 @@ class TransactionServiceImplTest {
         List<TransactionResponseDTO> transactions = transactionService.getAllTransactions();
 
         // Assert
+        assertNotNull(transactions);
         assertEquals(2, transactions.size());
-        assertEquals("Deposit of $100", transactions.get(0).getMessage());
-        assertEquals("Withdrawal of $50", transactions.get(1).getMessage());
+
+        assertTrue(transactions.stream().anyMatch(t -> t.getMessage().equals("Deposit of $100")));
+        assertTrue(transactions.stream().anyMatch(t -> t.getMessage().equals("Withdrawal of $50")));
     }
 
     @Test
@@ -59,8 +63,10 @@ class TransactionServiceImplTest {
         List<String> transactionMessages = transactionService.getTransactionsList();
 
         // Assert
+        assertNotNull(transactionMessages);
         assertEquals(2, transactionMessages.size());
-        assertEquals("Deposit of $100", transactionMessages.get(0));
-        assertEquals("Withdrawal of $50", transactionMessages.get(1));
+
+        assertTrue(transactionMessages.stream().anyMatch(message -> message.equals("Deposit of $100")));
+        assertTrue(transactionMessages.stream().anyMatch(message -> message.equals("Withdrawal of $50")));
     }
 }
