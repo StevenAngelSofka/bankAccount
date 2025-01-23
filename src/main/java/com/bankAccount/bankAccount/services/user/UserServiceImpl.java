@@ -71,4 +71,13 @@ public class UserServiceImpl implements UserService {
                         .orElseGet(() -> responseHandler.buildErrorUser("The user with ID: " + idUser + " does not exist.", HttpStatus.NOT_FOUND))
         );
     }
+
+    @Override
+    public UserResponseDTO getUserById(long id) {
+        return responseHandler.executeSafelyUser(() ->
+                userRepository.findById(id)
+                        .map(userDB -> responseHandler.buildSuccessUser("User found successfully", userDB))
+                        .orElseGet(() -> responseHandler.buildErrorUser("The user with ID: " + id + " does not exist.", HttpStatus.NOT_FOUND))
+        );
+    }
 }

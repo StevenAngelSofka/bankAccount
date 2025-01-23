@@ -13,9 +13,10 @@ public class JwtUtil {
     private static final long EXPIRATION_TIME = 1000 * 60 * 60 * 24;
     private static final Algorithm ALGORITHM = Algorithm.HMAC256(SECRET_KEY);
 
-    public String generateToken(String email) {
+    public String generateToken(String email, long id) {
         return JWT.create()
                 .withSubject(email)
+                .withClaim("id", id)
                 .withIssuer("javaSS")
                 .withIssuedAt(new Date(System.currentTimeMillis()))
                 .withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
@@ -38,6 +39,13 @@ public class JwtUtil {
                 .build()
                 .verify(jwt)
                 .getSubject();
+    }
+
+    public Long getIdByToken(String jwt) {
+        return JWT.require(ALGORITHM)
+                .build()
+                .verify(jwt)
+                .getClaim("id").asLong();
     }
 
 }
