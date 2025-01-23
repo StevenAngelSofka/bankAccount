@@ -2,6 +2,7 @@ package com.bankAccount.bankAccount.dto;
 
 import com.bankAccount.bankAccount.dto.transaction.TransactionResponseDTO;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
@@ -20,25 +21,29 @@ class TransactionResponseDTOTest {
                 .build();
 
         // Verificar que los valores se asignaron correctamente
-        assertNotNull(dto);
-        assertEquals("Transaction successful", dto.getMessage());
-        assertTrue(dto.isSuccess());
-        assertEquals(100.50, dto.getAmount());
-        assertEquals(currentDate, dto.getDate());
+        assertAll("Verify TransactionResponseDTO builder properties",
+                () -> assertNotNull(dto),
+                () -> assertEquals("Transaction successful", dto.getMessage()),
+                () -> assertTrue(dto.isSuccess()),
+                () -> assertEquals(100.50, dto.getAmount()),
+                () -> assertEquals(currentDate, dto.getDate())
+        );
     }
 
     @Test
     public void testTransactionResponseDTOConstructor() {
         // Crear el DTO usando el constructor
         LocalDateTime currentDate = LocalDateTime.now();
-        TransactionResponseDTO dto = new TransactionResponseDTO("Transaction successful", true, 100.50, currentDate);
+        TransactionResponseDTO dto = new TransactionResponseDTO("Transaction successful", true, 100.50, currentDate, HttpStatus.OK);
 
         // Verificar que los valores se asignaron correctamente
-        assertNotNull(dto);
-        assertEquals("Transaction successful", dto.getMessage());
-        assertTrue(dto.isSuccess());
-        assertEquals(100.50, dto.getAmount());
-        assertEquals(currentDate, dto.getDate());
+        assertAll("Verify TransactionResponseDTO constructor properties",
+                () -> assertNotNull(dto),
+                () -> assertEquals("Transaction successful", dto.getMessage()),
+                () -> assertTrue(dto.isSuccess()),
+                () -> assertEquals(100.50, dto.getAmount()),
+                () -> assertEquals(currentDate, dto.getDate())
+        );
     }
 
 }

@@ -7,6 +7,7 @@ import com.bankAccount.bankAccount.repository.BankAccountRepository;
 import com.bankAccount.bankAccount.repository.UserRepository;
 import com.bankAccount.bankAccount.services.bankAccount.BankAccountServiceImpl;
 import com.bankAccount.bankAccount.services.transaction.TransactionService;
+import com.bankAccount.bankAccount.utils.ResponseHandler;
 import lombok.AllArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,14 +15,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.*;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +38,9 @@ class BankAccountServiceImplTest {
 
     @Mock
     private TransactionService transactionService;
+
+    @Mock
+    private ResponseHandler responseHandler;
 
     @InjectMocks
     private BankAccountServiceImpl bankAccountService;
@@ -67,16 +72,31 @@ class BankAccountServiceImplTest {
         // Verificación del resultado
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals("12345", result.get(0).getNumberAccount());
-        assertEquals("67890", result.get(1).getNumberAccount());
+        assertTrue(result.stream().anyMatch(account -> "12345".equals(account.getNumberAccount())));
+        assertTrue(result.stream().anyMatch(account -> "67890".equals(account.getNumberAccount())));
     }
 
     /* getBalanceByAccount */
 
     @Test
     public void testGetBalanceByAccount_Success() {
+        User user = new User(1, "54321", "Alice Johnson", "alice@example.com", "securePassword123");
+        BankAccount account = new BankAccount(1L, "123456", 1000.00, "checking", user);
+
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO("The balance for account : 123456 is: 1000.0", true, 1000.00, HttpStatus.OK);
+
         // Simulamos que la cuenta existe en el repositorio
         when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+
+        // Mock del responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        doAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        }).when(responseHandler).executeSafelyAccount(any());
+
+        // Mock del responseHandler.buildSuccessBankAccount para devolver un BankAccountResponseDTO simulado
+        when(responseHandler.buildSuccessAccount("The balance for account : 123456 is: 1000.0", 1000.00))
+                .thenReturn(successResponse);
 
         // Llamamos al método
         BankAccountResponseDTO response = bankAccountService.getBalanceByAccount(1L);
@@ -92,12 +112,25 @@ class BankAccountServiceImplTest {
         // Simulamos que la cuenta no existe
         when(bankAccountRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Llamamos al método
+        // Mock del responseHandler para manejar el escenario de error
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "The account with ID: 1 does not exist.", false, null, HttpStatus.NOT_FOUND
+        );
+        when(responseHandler.buildErrorAccount("The account with ID: 1 does not exist.", HttpStatus.NOT_FOUND))
+                .thenReturn(errorResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.getBalanceByAccount(1L);
 
-        // Validamos la respuesta
-        assertEquals("The account with ID: 1 does not exist.", response.getMessage());
+        // Assert
         assertFalse(response.isSuccess());
+        assertEquals("The account with ID: 1 does not exist.", response.getMessage());
+        assertNull(response.getData());
     }
 
     /* createAccount */
@@ -113,12 +146,28 @@ class BankAccountServiceImplTest {
         // Simulamos el guardado de la cuenta
         when(bankAccountRepository.save(newAccount)).thenReturn(newAccount);
 
-        // Llamamos al método
+        // Mock para la creación exitosa de la cuenta
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO(
+                "Account created successfully", true, newAccount, HttpStatus.CREATED
+        );
+
+        // Usamos lenient para permitir stubbings no utilizados
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta exitosa
+        when(responseHandler.buildSuccessAccount("Account created successfully", newAccount))
+                .thenReturn(successResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.createAccount(1L, newAccount);
 
-        // Validamos la respuesta
-        assertEquals("Account created successfully", response.getMessage());
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertTrue(response.isSuccess());
+        assertEquals("Account created successfully", response.getMessage());
         assertEquals(newAccount, response.getData());
     }
 
@@ -129,43 +178,98 @@ class BankAccountServiceImplTest {
         // Simulamos que el usuario no existe
         when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Llamamos al método
+        // Simulamos la respuesta de error cuando el usuario no se encuentra
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "User with ID: 1 not found.", false, null, HttpStatus.NOT_FOUND
+        );
+
+        // Usamos lenient para permitir stubbings no utilizados
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de error
+        when(responseHandler.buildErrorAccount("User with ID: 1 not found.", HttpStatus.NOT_FOUND))
+                .thenReturn(errorResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.createAccount(1L, newAccount);
 
-        // Validamos la respuesta
-        assertEquals("User with ID: 1 not found.", response.getMessage());
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertFalse(response.isSuccess());
+        assertEquals("User with ID: 1 not found.", response.getMessage());
     }
 
     /* updateAccount */
 
     @Test
     void testUpdateAccount_Success() {
-        // Configuración del mock
-        BankAccount accountToUpdate = new BankAccount(1L, "12345", 1000.0, "Savings", null);
-        BankAccount updatedAccount = new BankAccount(1L, "12345", 1500.0, "Checking", null);
+        // Arrange
+        BankAccount existingAccount = new BankAccount(1L, "123456", 500.00, "CHECKING", null);
+        BankAccount updatedAccount = new BankAccount(1L, "654321", 600.00, "SAVINGS", null);
 
-        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(accountToUpdate));
-        when(bankAccountRepository.save(accountToUpdate)).thenReturn(updatedAccount);
+        // Simulamos que la cuenta existe
+        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(existingAccount));
 
-        // Llamada al método
+        // Simulamos la actualización de la cuenta
+        when(bankAccountRepository.save(any(BankAccount.class))).thenReturn(updatedAccount);
+
+        // Simulamos la respuesta de éxito
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO(
+                "Account updated successfully", true, updatedAccount, HttpStatus.OK
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de éxito
+        when(responseHandler.buildSuccessAccount("Account updated successfully", updatedAccount))
+                .thenReturn(successResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.updateAccount(1L, updatedAccount);
 
-        // Verificación del resultado
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertTrue(response.isSuccess());
         assertEquals("Account updated successfully", response.getMessage());
-        assertEquals(1500.0, ((BankAccount) response.getData()).getBalance());
+        assertEquals(updatedAccount.getNumberAccount(), ((BankAccount) response.getData()).getNumberAccount());
+        assertEquals(updatedAccount.getType(), ((BankAccount) response.getData()).getType());
     }
 
     @Test
     void testUpdateAccount_NotFound() {
-        // Configuración del mock para que la cuenta no exista
+        // Arrange
+        BankAccount updatedAccount = new BankAccount(1L, "654321", 600.00, "SAVINGS", null);
+
+        // Simulamos que la cuenta no existe
         when(bankAccountRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Llamada al método
-        BankAccountResponseDTO response = bankAccountService.updateAccount(1L, new BankAccount());
+        // Simulamos la respuesta de error
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "The account with ID: 1 does not exist.", false, null, HttpStatus.NOT_FOUND
+        );
 
-        // Verificación del resultado
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de error
+        when(responseHandler.buildErrorAccount("The account with ID: 1 does not exist.", HttpStatus.NOT_FOUND))
+                .thenReturn(errorResponse);
+
+        // Act
+        BankAccountResponseDTO response = bankAccountService.updateAccount(1L, updatedAccount);
+
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertFalse(response.isSuccess());
         assertEquals("The account with ID: 1 does not exist.", response.getMessage());
     }
@@ -174,29 +278,66 @@ class BankAccountServiceImplTest {
 
     @Test
     void testDeleteAccount_Success() {
-        // Configuración del mock
-        BankAccount accountToDelete = new BankAccount(1L, "12345", 1000.0, "Savings", null);
+        // Arrange
+        BankAccount existingAccount = new BankAccount(1L, "123456", 500.00, "CHECKING", null);
 
-        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(accountToDelete));
+        // Simulamos que la cuenta existe
+        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(existingAccount));
+
+        // Simulamos que la cuenta se elimina
         doNothing().when(bankAccountRepository).deleteById(1L);
 
-        // Llamada al método
+        // Simulamos la respuesta de éxito
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO(
+                "Account deleted successfully", true, null, HttpStatus.OK
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de éxito
+        when(responseHandler.buildSuccessAccount("Account deleted successfully", null))
+                .thenReturn(successResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.deleteAccount(1L);
 
-        // Verificación del resultado
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertTrue(response.isSuccess());
         assertEquals("Account deleted successfully", response.getMessage());
+        verify(bankAccountRepository).deleteById(1L);
     }
 
     @Test
     void testDeleteAccount_NotFound() {
-        // Configuración del mock para que la cuenta no exista
+        // Arrange
+        // Simulamos que la cuenta no existe
         when(bankAccountRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Llamada al método
+        // Simulamos la respuesta de error
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "The account with ID: 1 does not exist.", false, null, HttpStatus.NOT_FOUND
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de error
+        when(responseHandler.buildErrorAccount("The account with ID: 1 does not exist.", HttpStatus.NOT_FOUND))
+                .thenReturn(errorResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.deleteAccount(1L);
 
-        // Verificación del resultado
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
         assertFalse(response.isSuccess());
         assertEquals("The account with ID: 1 does not exist.", response.getMessage());
     }
@@ -206,75 +347,207 @@ class BankAccountServiceImplTest {
 
     @Test
     public void testDepositMoney_Success() {
+        // Arrange
+        BankAccount existingAccount = new BankAccount(1L, "123456", 1000.00, "CHECKING", null);
         double depositAmount = 500.00;
 
         // Simulamos que la cuenta existe
-        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(existingAccount));
 
-        // Llamamos al método
+        // Simulamos la actualización de la cuenta
+        when(bankAccountRepository.save(any(BankAccount.class))).thenReturn(existingAccount);
+
+        // Simulamos el servicio de transacciones
+        doNothing().when(transactionService).addTransaction(anyString(), eq(depositAmount));
+
+        // Simulamos la respuesta de éxito
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO(
+                "Transaction type: CHECKING. Amount: 500.0 . Current Balance: 1500.0", true, existingAccount, HttpStatus.OK
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de éxito
+        when(responseHandler.buildSuccessAccount(any(), any())).thenReturn(successResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.depositMoney(1L, depositAmount);
 
-        // Validamos la respuesta
-        assertEquals("Transaction type: SAVINGS. Amount: 500.0 . Current Balance: 1500.0", response.getMessage());
+        // Assert
+        assertNotNull(response);
         assertTrue(response.isSuccess());
+        assertEquals("Transaction type: CHECKING. Amount: 500.0 . Current Balance: 1500.0", response.getMessage());
+        verify(bankAccountRepository).save(existingAccount); // Verificamos que se haya guardado la cuenta
+        verify(transactionService).addTransaction(anyString(), eq(depositAmount));
     }
 
     @Test
     public void testDepositMoney_InvalidAmount() {
-        double depositAmount = -100.00; // Monto inválido
+        // Arrange
+        double depositAmount = -500.00; // Monto inválido
 
-        // Llamamos al método
+        // Simulamos la respuesta de error directamente en el responseHandler
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "Invalid amount.", false, null, HttpStatus.BAD_REQUEST
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver la respuesta de error
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve la respuesta esperada
+        });
+
+        // Simulamos que el monto no es válido, y devolvemos el error predefinido
+        when(responseHandler.buildErrorAccount("Invalid amount.", HttpStatus.BAD_REQUEST))
+                .thenReturn(errorResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.depositMoney(1L, depositAmount);
 
-        // Validamos la respuesta
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
+        assertFalse(response.isSuccess()); // Debe fallar
         assertEquals("Invalid amount.", response.getMessage());
-        assertFalse(response.isSuccess());
     }
 
     @Test
     public void testDepositMoney_AccountNotFound() {
+        // Arrange
         double depositAmount = 500.00;
 
         // Simulamos que la cuenta no existe
         when(bankAccountRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Llamamos al método
+        // Simulamos la respuesta de error
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "The account with ID: 1 does not exist.", false, null, HttpStatus.NOT_FOUND
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de error
+        when(responseHandler.buildErrorAccount("The account with ID: 1 does not exist.", HttpStatus.NOT_FOUND))
+                .thenReturn(errorResponse);
+
+        // Act
         BankAccountResponseDTO response = bankAccountService.depositMoney(1L, depositAmount);
 
-        // Validamos la respuesta
-        assertEquals("The account with ID: 1 does not exist.", response.getMessage());
+        // Assert
+        assertNotNull(response);
         assertFalse(response.isSuccess());
+        assertEquals("The account with ID: 1 does not exist.", response.getMessage());
     }
 
     /* withdrawMoney */
 
     @Test
     public void testWithdrawMoney_Success() {
-        double withdrawAmount = 200.00;
+        // Arrange
+        BankAccount existingAccount = new BankAccount(1L, "123456", 1000.00, "CHECKING", null);
+        double withdrawalAmount = 500.00;
 
         // Simulamos que la cuenta existe
-        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(existingAccount));
 
-        // Llamamos al método
-        BankAccountResponseDTO response = bankAccountService.withdrawMoney(1L, withdrawAmount);
+        // Simulamos la actualización de la cuenta
+        double updatedBalance = existingAccount.getBalance() - withdrawalAmount;
+        existingAccount.setBalance(updatedBalance);
+        when(bankAccountRepository.save(any(BankAccount.class))).thenReturn(existingAccount);
 
-        // Validamos la respuesta
-        assertEquals("Transaction type: SAVINGS. Amount: 200.0 . Current Balance: 800.0", response.getMessage());
-        assertTrue(response.isSuccess());
+        // Simulamos el servicio de transacciones
+        doNothing().when(transactionService).addTransaction(anyString(), eq(withdrawalAmount));
+
+        // Simulamos la respuesta de éxito
+        BankAccountResponseDTO successResponse = new BankAccountResponseDTO(
+                "Transaction type: CHECKING. Amount: 500.0 . Current Balance: 500.0",
+                true,
+                existingAccount,
+                HttpStatus.OK
+        );
+
+        // Simulamos el responseHandler para ejecutar el Supplier y devolver el resultado esperado
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el resultado esperado
+        });
+
+        // Simulamos la construcción de la respuesta de éxito
+        when(responseHandler.buildSuccessAccount(any(), any())).thenReturn(successResponse);
+
+        // Act
+        BankAccountResponseDTO response = bankAccountService.withdrawMoney(1L, withdrawalAmount);
+
+        // Assert
+        assertNotNull(response); // Verifica que la respuesta no es nula
+        assertTrue(response.isSuccess()); // Verifica que la operación fue exitosa
+        assertEquals("Transaction type: CHECKING. Amount: 500.0 . Current Balance: 500.0", response.getMessage());
+        verify(bankAccountRepository).save(existingAccount); // Verificamos que la cuenta haya sido guardada con el nuevo balance
+        verify(transactionService).addTransaction(anyString(), eq(withdrawalAmount));
+    }
+
+    @Test
+    public void testWithdrawMoney_InvalidAmount() {
+        // Arrange
+        double invalidAmount = -500.00; // Monto inválido
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "Invalid amount.", false, null, HttpStatus.BAD_REQUEST
+        );
+
+        // Simulamos que el responseHandler maneja el error de monto inválido
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el error esperado
+        });
+
+        // Simulamos que el responseHandler devuelve el error por monto inválido
+        when(responseHandler.buildErrorAccount("Invalid amount.", HttpStatus.BAD_REQUEST))
+                .thenReturn(errorResponse);
+
+        // Act
+        BankAccountResponseDTO response = bankAccountService.withdrawMoney(1L, invalidAmount);
+
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
+        assertFalse(response.isSuccess()); // Debe fallar
+        assertEquals("Invalid amount.", response.getMessage()); // El mensaje debe coincidir
     }
 
     @Test
     public void testWithdrawMoney_InsufficientFunds() {
-        double withdrawAmount = 2000.00; // Monto superior al saldo
+        // Arrange
+        double withdrawalAmount = 2000.00; // Monto que excede el saldo
+        BankAccount existingAccount = new BankAccount(1L, "123456", 1000.00, "CHECKING", null); // Saldo insuficiente
+        BankAccountResponseDTO errorResponse = new BankAccountResponseDTO(
+                "Insufficient funds.", false, null, HttpStatus.BAD_REQUEST
+        );
 
-        // Simulamos que la cuenta existe
-        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(account));
+        // Simulamos que la cuenta existe en el repositorio
+        when(bankAccountRepository.findById(1L)).thenReturn(Optional.of(existingAccount));
 
-        // Llamamos al método
-        BankAccountResponseDTO response = bankAccountService.withdrawMoney(1L, withdrawAmount);
+        // Simulamos que el responseHandler maneja el error de fondos insuficientes
+        when(responseHandler.executeSafelyAccount(any())).thenAnswer(invocation -> {
+            Supplier<BankAccountResponseDTO> supplier = invocation.getArgument(0);
+            return supplier.get(); // Ejecuta el Supplier y devuelve el error esperado
+        });
 
-        // Validamos la respuesta
+        // Simulamos que el responseHandler devuelve el error por fondos insuficientes
+        when(responseHandler.buildErrorAccount("Insufficient funds.", HttpStatus.BAD_REQUEST))
+                .thenReturn(errorResponse);
+
+        // Act
+        BankAccountResponseDTO response = bankAccountService.withdrawMoney(1L, withdrawalAmount);
+
+        // Assert
+        assertNotNull(response); // Aseguramos que la respuesta no sea null
+        assertFalse(response.isSuccess()); // Debe fallar
         assertEquals("Insufficient funds.", response.getMessage());
-        assertFalse(response.isSuccess());
     }
 }

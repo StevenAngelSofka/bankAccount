@@ -3,7 +3,9 @@ package com.bankAccount.bankAccount.services.user;
 import com.bankAccount.bankAccount.dto.user.UserResponseDTO;
 import com.bankAccount.bankAccount.entities.User;
 import com.bankAccount.bankAccount.repository.UserRepository;
+import com.bankAccount.bankAccount.utils.ResponseHandler;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     PasswordEncoder passwordEncoder;
 
+    @Autowired
+    ResponseHandler responseHandler;
+
     @Override
     public List<User> getAllUsers() {
         return userRepository.findAll();
@@ -26,89 +31,53 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponseDTO registerUser(User user) {
-        if (userRepository.existsByEmail(user.getEmail())) {
-            return UserResponseDTO.builder()
-                    .message("Email already in use")
-                    .success(false)
-                    .build();
-        }
-
-        try {
-            String hashedPassword = passwordEncoder.encode(user.getPassword());
-            user.setPassword(hashedPassword);
-
-            User createdUser = userRepository.save(user);
-
-            return UserResponseDTO.builder()
-                    .message("User created successfully")
-                    .success(true)
-                    .data(createdUser)
-                    .build();
-        } catch (Exception e) {
-            return UserResponseDTO.builder()
-                    .message("Error creating user: " + e.getMessage())
-                    .success(false)
-                    .build();
-        }
+        return responseHandler.executeSafelyUser(() ->
+                Optional.of(user)
+                    .filter(u -> !userRepository.existsByEmail(u.getEmail()))
+                    .map( u -> {
+                        u.setPassword(passwordEncoder.encode(u.getPassword()));
+                        User createdUser = userRepository.save(u);
+                        return responseHandler.buildSuccessUser("User created successfully", createdUser);
+                    })
+                    .orElseGet(() -> responseHandler.buildErrorUser("Email already in use", HttpStatus.BAD_REQUEST))
+        );
     }
+
 
     @Override
     public UserResponseDTO updateUser(long idUser, User user) {
-        try{
-            Optional<User> userDB = userRepository.findById(idUser);
+        return responseHandler.executeSafelyUser(() ->
+                userRepository.findById(idUser)
+                    .map(userDB -> {
+                        userDB.setIdentificationNumber(user.getIdentificationNumber());
+                        userDB.setName(user.getName());
+                        userDB.setEmail(user.getEmail());
 
-            if(userDB.isEmpty()) {
-                return UserResponseDTO.builder()
-                        .message("The user with ID: " + idUser + " does not exist.")
-                        .success(false)
-                        .build();
-            }
-
-            User userToUpdate = userDB.get();
-            userToUpdate.setIdentificationNumber(user.getIdentificationNumber());
-            userToUpdate.setName(user.getName());
-            userToUpdate.setEmail(user.getEmail());
-
-            User updatedUser = userRepository.save(userToUpdate);
-
-            return UserResponseDTO.builder()
-                    .message("User updated successfully")
-                    .success(true)
-                    .data(updatedUser)
-                    .build();
-        } catch (Exception e) {
-            return UserResponseDTO.builder()
-                    .message("Error updating user: " + e.getMessage())
-                    .success(false)
-                    .build();
-        }
+                        User updatedUser = userRepository.save(userDB);
+                        return responseHandler.buildSuccessUser("User updated successfully", updatedUser);
+                    })
+                    .orElseGet(() -> responseHandler.buildErrorUser("The user with ID: " + idUser + " does not exist.", HttpStatus.NOT_FOUND))
+        );
     }
 
     @Override
     public UserResponseDTO deleteUser(long idUser) {
+        return responseHandler.executeSafelyUser(() ->
+                userRepository.findById(idUser)
+                        .map(userDB -> {
+                            userRepository.deleteById(idUser);
+                            return responseHandler.buildSuccessUser("User deleted successfully", null);
+                        })
+                        .orElseGet(() -> responseHandler.buildErrorUser("The user with ID: " + idUser + " does not exist.", HttpStatus.NOT_FOUND))
+        );
+    }
 
-        Optional<User> userDB = userRepository.findById(idUser);
-
-        if(userDB.isEmpty()) {
-            return UserResponseDTO.builder()
-                    .message("The user with ID: " + idUser + " does not exist.")
-                    .success(false)
-                    .build();
-        }
-
-        try {
-            userRepository.deleteById(idUser);
-
-            return UserResponseDTO.builder()
-                    .message("User deleted successfully")
-                    .success(true)
-                    .data(null)
-                    .build();
-        } catch (Exception e) {
-            return UserResponseDTO.builder()
-                    .message("Error deleting user: " + e.getMessage())
-                    .success(false)
-                    .build();
-        }
+    @Override
+    public UserResponseDTO getUserById(long id) {
+        return responseHandler.executeSafelyUser(() ->
+                userRepository.findById(id)
+                        .map(userDB -> responseHandler.buildSuccessUser("User found successfully", userDB))
+                        .orElseGet(() -> responseHandler.buildErrorUser("The user with ID: " + id + " does not exist.", HttpStatus.NOT_FOUND))
+        );
     }
 }

@@ -23,6 +23,7 @@ public class UserIT {
                 .identificationNumber("12345")
                 .name("John Doe")
                 .email("john.doe@example.com")
+                .password("securePassword123")
                 .build();
 
         // Guardar el usuario en la base de datos
@@ -42,6 +43,7 @@ public class UserIT {
                 .identificationNumber("67890")
                 .name("Jane Doe")
                 .email("jane.doe@example.com")
+                .password("securePassword123")
                 .build();
 
         // Guardar el usuario en la base de datos

@@ -14,4 +14,6 @@ public interface UserService {
     UserResponseDTO updateUser(long idUser, User user);
 
     UserResponseDTO deleteUser(long idUser);
+
+    UserResponseDTO getUserById(long id);
 }

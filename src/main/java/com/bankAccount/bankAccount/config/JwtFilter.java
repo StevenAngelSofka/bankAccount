@@ -45,21 +45,10 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        System.out.println("********/////////***********////////***********");
-        System.out.println("Token valido siguee");
-        System.out.println("********/////////***********////////***********");
-
         // Obtener el usuario
         String email = this.jwtUtil.getEmailByUser(jwt);
-        System.out.println("********/////////***********////////***********");
-        System.out.println(email);
-        System.out.println("********/////////***********////////***********");
 
         UserDetails user = this.userDetailsService.loadUserByUsername(email);
-
-        System.out.println("********/////////***********////////***********");
-        System.out.println(user);
-        System.out.println("********/////////***********////////***********");
 
         // Cargar al usuario en el contexto de seguridad.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
@@ -68,9 +57,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
         authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-        System.out.println("********/////////***********////////***********");
-        System.out.println(authenticationToken);
-        System.out.println("********/////////***********////////***********");
         filterChain.doFilter(request, response);
     }
 }
