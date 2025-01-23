@@ -1,5 +1,6 @@
 package com.bankAccount.bankAccount.utils;
 
+import com.bankAccount.bankAccount.dto.auth.AuthResponseDTO;
 import com.bankAccount.bankAccount.dto.bankAccount.BankAccountDTO;
 import com.bankAccount.bankAccount.dto.bankAccount.BankAccountResponseDTO;
 import com.bankAccount.bankAccount.dto.user.UserDTO;
@@ -54,6 +55,16 @@ public class ResponseHandler {
                 .build();
     }
 
+    public AuthResponseDTO buildSuccessAuth(String message, String token) {
+
+        return AuthResponseDTO.builder()
+                .message(message)
+                .success(true)
+                .httpStatus(HttpStatus.OK)
+                .token(token)
+                .build();
+    }
+
     public UserResponseDTO buildErrorUser(String message, HttpStatus status) {
         return UserResponseDTO.builder()
                 .message(message)
@@ -72,6 +83,15 @@ public class ResponseHandler {
                 .build();
     }
 
+    public AuthResponseDTO buildErrorAuth(String message, HttpStatus status) {
+        return AuthResponseDTO.builder()
+                .message(message)
+                .success(false)
+                .httpStatus(status)
+                .token(null)
+                .build();
+    }
+
     public UserResponseDTO executeSafelyUser(Supplier<UserResponseDTO> action) {
         try {
             return action.get();
@@ -85,6 +105,14 @@ public class ResponseHandler {
             return action.get();
         } catch (Exception e) {
             return buildErrorAccount("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public AuthResponseDTO executeSafelyAuth(Supplier<AuthResponseDTO> action) {
+        try {
+            return action.get();
+        } catch (Exception e) {
+            return buildErrorAuth("Error: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }
